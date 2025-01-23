@@ -17,18 +17,28 @@ enum orderStatus {
   PENDING
   DELIVERED
   CANCELLED
-} 
+}
 
 model order {
-  id                  String      @id @default(uuid()) @db.Uuid
-  customer_id         String      @db.Uuid
-  order_date          DateTime    @default(now()) @db.Timestamptz()
-  status              orderStatus @default(PENDING)
+  id                  String        @id @default(uuid()) @db.Uuid
+  customer_id         String        @db.Uuid
+  order_date          DateTime      @default(now()) @db.Timestamptz()
+  status              orderStatus   @default(PENDING)
   total_amount        Float
-  billing_address     String?     @db.Text
-  shipping_method     String      @db.Text
-  tracking_number     Int?        @db.Integer
-  shipping_address_id String      @db.Uuid
-  payment_method_id   String      @db.Uuid
-  createdAt           DateTime    @updatedAt @db.Timestamptz()
+  billing_address     String?       @db.Text
+  shipping_method     String        @db.Text
+  tracking_number     Int?          @db.Integer
+  shipping_address_id String        @db.Uuid
+  payment_method_id   String        @db.Uuid
+  createdAt           DateTime      @updatedAt @db.Timestamptz()
+  Order_items         order_items[] @relation("OrderItems")
+}
+
+model order_items {
+  id         String @id @default(uuid()) @db.Uuid
+  order_id   String @db.Uuid
+  product_id String @db.Uuid
+  quantity   Int    @db.Integer
+  price      Float
+  order      order  @relation("OrderItems", fields: [order_id], references: [id])
 }
