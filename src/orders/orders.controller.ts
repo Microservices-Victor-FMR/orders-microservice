@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload} from '@nestjs/microservices';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto} from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -11,9 +11,11 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @MessagePattern('createOrder')
- async createOrder(@Payload() createOrderDto: CreateOrderDto) {
-    const result = await this.ordersService.create(createOrderDto)
+  async createOrder(@Payload()payload: CreateOrderDto) {
+
+    const result = await this.ordersService.createOrder(payload);
     return result;
+   
   }
 
   @MessagePattern('findAllOrders')
@@ -22,8 +24,8 @@ export class OrdersController {
     return result
   }
 
-  @MessagePattern('FindOneOrder')
- async findOneByIdOrder(@Payload() param:FindOneByIdOrderDto) {
+  @MessagePattern('findOneOrder')
+  async findOneByIdOrder(@Payload() param:FindOneByIdOrderDto) {
    
     const result = await this.ordersService.findOneById(param.id)
     return result
@@ -39,7 +41,7 @@ export class OrdersController {
   }
 
   @MessagePattern('removeOrder')
- async removeOrder(@Payload() payload: {param : FindOneByIdOrderDto}) {
+  async removeOrder(@Payload() payload: {param : FindOneByIdOrderDto}) {
     const {param} = payload
 
     const result = await this.ordersService.removeOrder(param.id);

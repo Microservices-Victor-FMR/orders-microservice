@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule} from '@nestjs/config';
 import { envSchema } from 'env.config';
 import { OrdersModule } from './orders/orders.module';
+import { OrderItemsModule } from './order_items/order_items.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { OrdersModule } from './orders/orders.module';
       isGlobal: true,
     }),
     OrdersModule,
+    OrderItemsModule,
   ],
 })
 export class AppModule {}

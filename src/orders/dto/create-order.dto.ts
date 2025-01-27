@@ -1,6 +1,7 @@
 import { orderStatus } from "@prisma/client"
 import { Type } from "class-transformer"
-import { IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, IsUUID, Min } from "class-validator"
+import { IsArray, IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, IsUUID, Min, ValidateNested } from "class-validator"
+import { CreateOrderItemDto } from "src/order_items/dto/create-order_item.dto"
 
 
 export class CreateOrderDto {
@@ -47,6 +48,10 @@ export class CreateOrderDto {
     @IsUUID()
     payment_method_id: string
 
-
+    @IsArray()
+    @IsNotEmpty()
+    @ValidateNested({each:true})
+    @Type(() => CreateOrderItemDto)
+    items: CreateOrderItemDto[]
 }
 

@@ -4,20 +4,54 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/prisma.service';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { console } from 'inspector';
-
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService,@Inject('NATS_SERVICE') private readonly client:ClientProxy) {}
+  constructor(private readonly prisma: PrismaService, @Inject('NATS_SERVICE') private readonly client: ClientProxy) {}
 
+  async createOrder(createOrderDto: CreateOrderDto) {
+    try {
+      const {
+        customer_id,
+        payment_method_id,
+        status,
+        shipping_address_id,
+        shipping_method,
+        billing_address,
+        tracking_number,
+        total_amount,
+      } = createOrderDto;
 
-  async create(createOrderDto: CreateOrderDto) {
-    
-    const newOrder = await this.prisma.order.create({ data: createOrderDto });
-    return newOrder;
+      const productIds = createOrderDto.items.map(item => item.product_id);
+      const productById = await firstValueFrom(this.client.send({ cmd: 'find_products_by_ids' },{ids: productIds} ));
+     
+      const newOrder = await this.prisma.order.create({
+        data: {
+          customer_id,
+          payment_method_id,
+          status,
+          shipping_address_id,
+          shipping_method,
+          billing_address,
+          tracking_number,
+          total_amount,
+          Order_items: {
+            create: createOrderDto.items.map((item) => ({
+              product_id: item.product_id,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+          },
+        },
+      });
+
+      console.log(productById);
+
+      return {newOrder, productById}
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
-
 
   async findAll(limit: number, cursor: string) {
     const register = await this.prisma.order.count();
@@ -32,10 +66,10 @@ export class OrdersService {
       queryOptions.cursor = { id: cursor };
       queryOptions.skip = 1;
     }
+
     const findAll = await this.prisma.order.findMany(queryOptions);
 
-    const nextCursor =
-      findAll.length > 0 ? findAll[findAll.length - 1].id : null;
+    const nextCursor = findAll.length > 0 ? findAll[findAll.length - 1].id : null;
 
     return {
       data: findAll,
@@ -45,11 +79,16 @@ export class OrdersService {
   }
 
   async findOneById(id: string) {
-    const findOneById = await this.prisma.order.findUnique({ where: { id: id } });
+    const findOneById = await this.prisma.order.findUnique({ where: { id } });
+
     if (!findOneById) {
-      throw new RpcException({ message: `Order not found ${id}`,statusCode: HttpStatus.NOT_FOUND,microservice: 'Orders',});
+      throw new RpcException({
+        message: `Order not found`,
+        statusCode: HttpStatus.NOT_FOUND,
+        microservice: 'Orders',
+      });
     }
-   
+
     return findOneById;
   }
 
